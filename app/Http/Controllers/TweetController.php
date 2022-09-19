@@ -11,11 +11,13 @@ class TweetController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
      */
     public function index()
     {
-        //
+        $followers = auth()->user()->follows->pluck('id');
+
+        return Tweet::with('user:id,name,username,avatar')->whereIn('user_id', $followers)->latest()->paginate(10);
     }
 
     /**
@@ -36,18 +38,25 @@ class TweetController extends Controller
      */
     public function store(StoreTweetRequest $request)
     {
-        //
+        $request->validate([
+            'body' => 'required',
+        ]);
+
+        return Tweet::create([
+            'user_id' => auth()->id(),
+            'body' => $request->body,
+        ]);
     }
 
     /**
      * Display the specified resource.
      *
      * @param  \App\Models\Tweet  $tweet
-     * @return \Illuminate\Http\Response
+     * @return Tweet
      */
     public function show(Tweet $tweet)
     {
-        //
+        return $tweet->load('user:id,name,username,avatar');
     }
 
     /**
@@ -77,10 +86,12 @@ class TweetController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  \App\Models\Tweet  $tweet
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy(Tweet $tweet)
     {
-        //
+        abort_if($tweet->user->id !== auth()->id(), 403);
+
+        return response()->json($tweet->delete());
     }
 }
