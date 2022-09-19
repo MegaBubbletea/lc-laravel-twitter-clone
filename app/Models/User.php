@@ -41,6 +41,18 @@ class User extends Authenticatable
         return $this->hasMany(Tweet::class);
     }
 
+    public function follow(User $user) {
+        return $this->follows()->attach($user);
+    }
+
+    public function unfollow(User $user) {
+        return $this->follows()->detach($user);
+    }
+
+    public function isFollowing(User $user) {
+        return $this->follows()->where('id', $user->id)->exists();
+    }
+
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
